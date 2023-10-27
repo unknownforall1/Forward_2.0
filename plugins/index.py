@@ -15,7 +15,7 @@ class temp(object):
 
 import pytz
 from datetime import datetime
-from pyrogram import Client, filters , Bot
+from pyrogram import Client, filters 
 from pyrogram.errors import FloodWait
 from pyrogram.errors.exceptions.bad_request_400 import InviteHashExpired, UserAlreadyParticipant
 from config import Config

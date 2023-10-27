@@ -1,9 +1,14 @@
+import logging
+import asyncio
 import pytz
 from datetime import datetime
-from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from pyrogram.errors import FloodWait
-from pyrogram.errors.exceptions.bad_request_400 import InviteHashExpired, UserAlreadyParticipant
+from pyrogram import Client, filters, enums
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+lock = asyncio.Lock()
+from pyrogram.errors.exceptions.bad_request_400 import InviteHashExpired, UserAlreadyParticipant, ChannelInvalid, ChatAdminRequired, UsernameInvalid, UsernameNotModified
 from config import Config
 import re
 from bot import Bot
@@ -22,7 +27,7 @@ IST = pytz.timezone('Asia/Kolkata')
 OWNER=int(Config.OWNER_ID)
 
 
-@Client.on_message(filters.private & filters.command(["index"]))
+@Client.on_message(filters.command & filters.incoming(["index"]))
 async def run(bot, message):
     if message.from_user.id != OWNER:
         await message.reply_text("Who the hell are you!!")
@@ -48,7 +53,7 @@ async def run(bot, message):
         global channel_type
         channel_type="private"
         try:
-            await bot.USER.join_chat(channel)
+            await bot.join_chat(channel)
         except UserAlreadyParticipant:
             pass
         except InviteHashExpired:
@@ -166,29 +171,29 @@ async def cb_handler(bot: Client, query: CallbackQuery):
     mcount = 0
     FROM=channel_id_
     try:
-        async for MSG in bot.USER.search_messages(chat_id=FROM,offset=skip_no,limit=limit_no,filter=filter):
+        async for MSG in bot.search_messages(chat_id=FROM,offset=skip_no,limit=limit_no,filter=filter):
             if channel_type == "public":
                 methord="bot"
                 channel=FROM
                 msg=await bot.get_messages(FROM, MSG.message_id)
             elif channel_type == "private":
-                methord="user"
+                methord="bot"
                 channel=str(FROM)
-                msg=await bot.USER.get_messages(FROM, MSG.message_id)
+                msg=await bot.get_messages(FROM, MSG.message_id)
             msg_caption=""
             if caption is not None:
                 msg_caption=caption
             elif msg.caption:
                 msg_caption=msg.caption
-            if filter in ("document", "video", "audio", "photo"):
-                for file_type in ("document", "video", "audio", "photo"):
+            if filter in ("document", "video"):
+                for file_type in ("document", "video"):
                     media = getattr(msg, file_type, None)
                     if media is not None:
                         file_type = file_type
                         id=media.file_id
                         break
             if filter == "empty":
-                for file_type in ("document", "video", "audio", "photo"):
+                for file_type in ("document", "video"):
                     media = getattr(msg, file_type, None)
                     if media is not None:
                         file_type = file_type

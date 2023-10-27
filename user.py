@@ -1,8 +1,9 @@
-from config import BOT_TOKEN, API_HASH, API_ID, BOT_USERNAME, TO_CHANNEL
+from config import Config
 from config import LOGGER
 from pyrogram import Client, __version__
 import asyncio
 BOT_USERNAME=Config.BOT_USERNAME
+BOT_TOKEN=Config.BOT_TOKEN API_HASH=Config.API_HASH API_ID=Config.API_ID
 
 class Bot(Client):
     def __init__(self):

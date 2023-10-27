@@ -56,7 +56,7 @@ async def cb_handler(bot: Client, query: CallbackQuery):
         try:
             get_caption = await bot.send_message( chat_id = query.from_user.id, text=" Send me caption \n\nif No send '0'", filters=filters.text)
             return
-        input=get_caption.txt
+        input== "0"
         if input == "0":
             caption=None
         else:

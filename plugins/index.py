@@ -52,9 +52,9 @@ async def run(bot, message):
               try:
                 await bot.join_chat(channel)
               except UserAlreadyParticipant:
-            pass
-        except InviteHashExpired:
-            await chat.reply_text("Wrong URL or User Banned in channel.")
+                pass
+              except InviteHashExpired:
+                await chat.reply_text("Wrong URL or User Banned in channel.")
             return
         while True:
             try:

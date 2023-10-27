@@ -45,12 +45,13 @@ async def run(bot, message):
           else:
             await chat.reply_text("Wrong URL")
             continue
+            
             if 'joinchat' in channel:
-        global channel_type
-        channel_type="private"
-        try:
-            await bot.join_chat(channel)
-        except UserAlreadyParticipant:
+              global channel_type
+              channel_type="private"
+              try:
+                await bot.join_chat(channel)
+              except UserAlreadyParticipant:
             pass
         except InviteHashExpired:
             await chat.reply_text("Wrong URL or User Banned in channel.")

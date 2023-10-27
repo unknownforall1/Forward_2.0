@@ -29,7 +29,7 @@ import asyncio
 from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait
 from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid, ChatAdminRequired, UsernameInvalid, UsernameNotModified
-ADMINS=Config.OWNER_ID
+ADMINS =Config.OWNER_ID
 INDEX_REQ_CHANNEL=Config.TO_CHANNEL
 LOG_CHANNEL=Config.TO_CHANNEL
 from database import save_data
@@ -61,7 +61,6 @@ async def index_files(bot, query):
     msg = query.message
 
     await query.answer('Processing...⏳', show_alert=True)
-    if int(from_user) not in ADMINS:
         await bot.send_message(int(from_user),
                                f'Your Submission for indexing {chat} has been accepted by our moderators and will be added soon.',
                                reply_to_message_id=int(lst_msg_id))

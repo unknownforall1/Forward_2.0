@@ -26,21 +26,6 @@ limit_no= "0"
 INDEXCHANNEL_ID = Config.INDEXCHANNEL_ID
 limit_no = "0"
 
-    buttons=InlineKeyboardMarkup(
-      [
-        [
-                InlineKeyboardButton("All Messages", callback_data="all")
-         ],
-         [
-                InlineKeyboardButton("Document", callback_data="docs"),
-                InlineKeyboardButton("Photos", callback_data="photos")
-         ],
-         [
-                InlineKeyboardButton("Videos", callback_data="videos"),
-                InlineKeyboardButton("Audios", callback_data="audio")
-         ]
-      ]
-    )
 
 @Client.on_message(filters.private & filters.command(["index"]))
 async def run(bot, message):
@@ -48,7 +33,8 @@ async def run(bot, message):
     await bot.send_message(
         chat_id=message.from_user.id,
         text=f"Ok,\nNow choose what type of messages you want to forward.",
-        reply_markup=buttons
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton('all', callback_data='all')]]
         )
 
 @Client.on_callback_query()
@@ -58,12 +44,8 @@ async def cb_handler(bot: Client, query: CallbackQuery):
         filter="document"
     elif query.data == "all":
         filter="empty"
-    elif query.data == "photos":
-        filter="photo"
     elif query.data == "videos":
         filter="video"
-    elif query.data == "audio":
-        filter="audio"
     caption=None
 
 

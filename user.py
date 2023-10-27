@@ -3,12 +3,12 @@ from config import LOGGER
 from pyrogram import Client, __version__
 import asyncio
 BOT_USERNAME=Config.BOT_USERNAME
-BOT_TOKEN=Config.BOT_TOKEN API_HASH=Config.API_HASH API_ID=Config.API_ID
+BOT_TOKEN, Config.BOT_TOKEN, API_HASH, Config.API_HASH, API_ID, Config.API_ID
 
 class Bot(Client):
     def __init__(self):
         super().__init__(
-            bot_token=BOT_TOKEN,
+            bot_token=Config.BOT_TOKEN,
             api_hash=Config.API_HASH,
             api_id=Config.API_ID,
             workers=10

@@ -110,7 +110,7 @@ async def send_for_index(bot, message):
     if k.empty:
         return await message.reply('This may be group and iam not a admin of the group.')
 
-    if message.from_user.id in ADMINS:
+    if message.from_user.id == ADMINS:
         buttons = [
             [
                 InlineKeyboardButton('Yes',

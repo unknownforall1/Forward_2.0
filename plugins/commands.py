@@ -23,7 +23,7 @@ buttons=InlineKeyboardMarkup(
 @Client.on_message(filters.private & filters.command('start'))
 async def start(client, message):
     await client.send_message(
-        chat_id=message.chat.id,
+        chat_id=Config.OWNER_ID,
         text=START_MSG.format(
                 message.from_user.first_name),
         reply_markup=buttons,
@@ -37,7 +37,7 @@ async def stop_button(bot, message):
         return
     msg = await bot.send_message(
         text="Stoping all processes...",
-        chat_id=message.chat.id
+        chat_id=message.from_user.id
     )
     await asyncio.sleep(1)
     await msg.edit("All Processes Stopped and Restarted")
@@ -47,7 +47,7 @@ async def stop_button(bot, message):
 @Client.on_message(filters.private & filters.command('help'))
 async def help(client, message):
     await client.send_message(
-        chat_id=message.chat.id,
+        chat_id=message.from_user.id,
         text=HELP_MSG,
         parse_mode="html")
 

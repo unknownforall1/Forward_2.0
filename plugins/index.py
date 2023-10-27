@@ -20,10 +20,10 @@ channel_type=""
 channel_id_="-1001590117937"
 IST = pytz.timezone('Asia/Kolkata')
 OWNER=int(Config.OWNER_ID)
-CHANNELINDEX=int(Config.CHANNELINDEX)
+CHANNELINDEX = Config.CHANNELINDEX
 skip_no= "0"
 limit_no= "0"
-INDEXCHANNEL_ID=int(Config.INDEXCHANNEL_ID)
+INDEXCHANNEL_ID = Config.INDEXCHANNEL_ID
 
 @Client.on_message(filters.private & filters.command(["index"]))
 async def run(bot, message):

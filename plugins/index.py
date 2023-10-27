@@ -53,8 +53,7 @@ async def cb_handler(bot: Client, query: CallbackQuery):
 
     m = await bot.send_message(
         text="Indexing Started",
-        chat_id=query.from_user.id
-    )
+        chat_id=query.from_user.id)
     msg_count = 0
     mcount = 0
     FROM=channel_id_
@@ -65,9 +64,9 @@ async def cb_handler(bot: Client, query: CallbackQuery):
                 CHANNELINDEX=FROM
                 msg=await bot.get_messages(FROM, MSG.message_id)
             elif channel_type == "private":
-                methord="user"
+                methord="bot"
                 CHANNELINDEX=str(FROM)
-                msg=await bot.USER.get_messages(FROM, MSG.message_id)
+                msg=await bot.get_messages(FROM, MSG.message_id)
             msg_caption=""
             if caption is not None:
                 msg_caption=caption

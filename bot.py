@@ -8,7 +8,6 @@ import pyromod.listen
 
 
 class Bot(Client):
-    USER: User = None
     USER_ID: int = None
 
     def __init__(self):

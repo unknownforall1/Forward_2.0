@@ -10,7 +10,8 @@ from pyrogram.errors.exceptions.bad_request_400 import FileReferenceEmpty, FileR
 import pytz
 from datetime import datetime
 
-
+from_chat_id= "-1001590117937"
+channel = "-1001590117937"
 IST = pytz.timezone('Asia/Kolkata')
 MessageCount = 0
 BOT_STATUS = "0"

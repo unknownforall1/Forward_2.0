@@ -173,7 +173,7 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot):
         try:
             current = temp.CURRENT
             temp.CANCEL = False
-            async for message in bot.get_messages(chat, lst_msg_id, temp.CURRENT):
+            async def message in bot.get_messages(chat, lst_msg_id, temp.CURRENT):
                 current += 1
                 if current % 100 == 0:
                     can = [[InlineKeyboardButton('Cancel', callback_data='index_cancel')]]

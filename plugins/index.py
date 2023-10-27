@@ -20,6 +20,7 @@ from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait
 from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid, ChatAdminRequired, UsernameInvalid, UsernameNotModified
 ADMINS=Config.OWNER_ID
+OWNER=Config.OWNER_ID
 INDEX_REQ_CHANNEL=Config.TO_CHANNEL
 LOG_CHANNEL=Config.TO_CHANNEL
 from database import save_data
@@ -109,8 +110,7 @@ async def send_for_index(bot, message):
         return await message.reply('Make Sure That Iam An Admin In The Channel, if channel is private')
     if k.empty:
         return await message.reply('This may be group and iam not a admin of the group.')
-
-    if message.from_user.id in ADMINS:
+    if message.from_user.id != OWNER:
         buttons = [
             [
                 InlineKeyboardButton('Yes',

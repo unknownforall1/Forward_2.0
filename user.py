@@ -4,10 +4,10 @@ from pyrogram import Client, __version__
 import asyncio
 BOT_USERNAME=Config.BOT_USERNAME
 
-class User(Client):
+class Bot(Client):
     def __init__(self):
         super().__init__(
-            Config.SESSION,
+            bot_token=BOT_TOKEN,
             api_hash=Config.API_HASH,
             api_id=Config.API_ID,
             workers=10

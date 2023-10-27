@@ -29,7 +29,7 @@ logger.setLevel(logging.INFO)
 lock = asyncio.Lock()
 
 
-ort pytz
+import pytz
 from datetime import datetime
 from pyrogram import Client, filters
 from pyrogram.errors import FloodWait

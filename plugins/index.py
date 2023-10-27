@@ -13,7 +13,7 @@ class temp(object):
     SETTINGS = {}
     IMDB_CAP = {}
 
-
+from config import Config
 import logging
 import asyncio
 from pyrogram import Client, filters, enums
@@ -35,7 +35,6 @@ from datetime import datetime
 from pyrogram import Client, filters
 from pyrogram.errors import FloodWait
 from pyrogram.errors.exceptions.bad_request_400 import InviteHashExpired, UserAlreadyParticipant
-from config import Config
 import re
 from bot import Bot
 import logging

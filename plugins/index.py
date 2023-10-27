@@ -30,14 +30,13 @@ async def run(bot, message):
         return
     while True:
         try:
-              chat = await bot.ask(OWNER_ID, 'Please send your `API_ID`', filters=filters.text)
-    if await cancelled(chat):
+              chat = await bot.ask(OWNER_ID, 'Please send your ‘LINK‘', filters=filters.text, timeout=30)
         return
     try:
         channel= int(chat.text)
-    except ValueError:
-        await chat.reply('Not a valid link (which must be an integer). Please start generating session again.')
-        return
+        except TimeoutError:
+            await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
+            return
               pattern=".*https://t.me/.*"
         result = re.match(pattern, channel, flags=re.IGNORECASE)
         if result:

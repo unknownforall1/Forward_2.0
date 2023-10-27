@@ -30,13 +30,15 @@ async def run(bot, message):
         return
     while True:
         try:
-            chat = await bot.ask( chat_id = Config.OWNER_ID, text = "To Index a channel you may send me the channel invite link, so that I can join channel and index the files.\n\nIt should be something like <code>https://t.me/xxxxxx</code> or <code>https://t.me/joinchat/xxxxxx</code>", filters=filters.text)
-            channel=chat.text
-        except TimeoutError:
-            await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
-            return
-
-        pattern=".*https://t.me/.*"
+              chat = await bot.ask(OWNER_ID, 'Please send your `API_ID`', filters=filters.text)
+    if await cancelled(chat):
+        return
+    try:
+        channel= int(chat.text)
+    except ValueError:
+        await chat.reply('Not a valid link (which must be an integer). Please start generating session again.')
+        return
+              pattern=".*https://t.me/.*"
         result = re.match(pattern, channel, flags=re.IGNORECASE)
         if result:
             print(channel)
@@ -44,12 +46,12 @@ async def run(bot, message):
         else:
             await chat.reply_text("Wrong URL")
             continue
-
+          
     if 'joinchat' in channel:
         global channel_type
         channel_type="private"
         try:
-            await bot.USER.join_chat(channel)
+            await bot.join_chat(channel)
         except UserAlreadyParticipant:
             pass
         except InviteHashExpired:

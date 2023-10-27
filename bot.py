@@ -26,7 +26,7 @@ class Bot(Client):
     async def start(self):
         await super().start()
         me = await self.get_me()
-        await self.send_message(chat_id=TO_CHANNEL, text=STARTED)
+        await self.send_message(chat_id=Config.TO_CHANNEL, text=STARTED)
 
     async def stop(self, *args):
         await super().stop()

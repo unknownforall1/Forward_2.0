@@ -26,10 +26,11 @@ OWNER=int(Config.OWNER_ID)
 async def run(bot, message):
     if message.from_user.id != OWNER:
         await message.reply_text("Who the hell are you!!")
-        return
-    while True:
+        user_id = msg.chat.id
+        chat = await bot.ask(chat_id = message.from_user.id, text = "To Index a channel you may send me the channel invite link, so that I can join channel and index the files.\n\nIt should be something like <code>https://t.me/xxxxxx</code> or <code>https://t.me/joinchat/xxxxxx</code>", filters=filters.text, timeout=30)
+        if await cancelled(api_id_msg):
+            return
         try:
-            chat = await bot.ask(chat_id = message.from_user.id, text = "To Index a channel you may send me the channel invite link, so that I can join channel and index the files.\n\nIt should be something like <code>https://t.me/xxxxxx</code> or <code>https://t.me/joinchat/xxxxxx</code>", filters=filters.text, timeout=30)
             channel=int(chat.text)
         except TimeoutError:
             await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")

@@ -29,24 +29,23 @@ async def run(bot, message):
         await message.reply_text("Who the hell are you!!")
         return
     while True:
-        try:
-              chat = await bot.ask(OWNER_ID, 'Please send your ‘LINK‘', filters=filters.text, timeout=30)
+      try:
+        chat = await bot.ask(OWNER_ID, 'Please send your ‘LINK‘', filters=filters.text, timeout=30)
         return
-    try:
-        channel= int(chat.text)
+        try:
+          channel= int(chat.text)
         except TimeoutError:
-            await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
-            return
-              pattern=".*https://t.me/.*"
-        result = re.match(pattern, channel, flags=re.IGNORECASE)
-        if result:
+          await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
+          return
+          pattern=".*https://t.me/.*"
+          result = re.match(pattern, channel, flags=re.IGNORECASE)
+          if result:
             print(channel)
             break
-        else:
+          else:
             await chat.reply_text("Wrong URL")
             continue
-          
-    if 'joinchat' in channel:
+            if 'joinchat' in channel:
         global channel_type
         channel_type="private"
         try:

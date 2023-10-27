@@ -12,6 +12,7 @@ from database import save_data
 import logging
 logging.basicConfig(format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s',
                     level=logging.ERROR)
+INDEXMSG="SEND LINK"
 
 limit_no=""               
 skip_no=""
@@ -29,7 +30,7 @@ async def run(bot, message):
         return
     while True:
         try:
-            chat = await bot.reply( INDEXMSG, chat_id = Config.OWNER_ID, filters=filters.text, timeout=30)
+            chat = await bot.ask( chat_id = Config.OWNER_ID, text = "To Index a channel you may send me the channel invite link, so that I can join channel and index the files.\n\nIt should be something like <code>https://t.me/xxxxxx</code> or <code>https://t.me/joinchat/xxxxxx</code>", filters=filters.text)
             channel=chat.text
         except TimeoutError:
             await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
@@ -56,7 +57,7 @@ async def run(bot, message):
             return
         while True:
             try:
-                id = await bot.reply(text = "Since this is a Private channel I need Channel id, Please send me channel ID\n\nIt should be something like <code>-100xxxxxxxxx</code>", chat_id = message.from_user.id, filters=filters.text, timeout=30)
+                id = await bot.ask(text = "Since this is a Private channel I need Channel id, Please send me channel ID\n\nIt should be something like <code>-100xxxxxxxxx</code>", chat_id = message.from_user.id, filters=filters.text, timeout=30)
                 channel=id.text
             except TimeoutError:
                 await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
@@ -80,7 +81,7 @@ async def run(bot, message):
 
     while True:
         try:
-            SKIP = await bot.reply(text = "Send me from where you want to start forwarding\nSend 0 for from beginning.", chat_id = message.from_user.id, filters=filters.text, timeout=30)
+            SKIP = await bot.ask(text = "Send me from where you want to start forwarding\nSend 0 for from beginning.", chat_id = message.from_user.id, filters=filters.text, timeout=30)
             print(SKIP.text)
         except TimeoutError:
             await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
@@ -94,7 +95,7 @@ async def run(bot, message):
             continue
     while True:
         try:
-            LIMIT = await bot.reply(text = "Send me from Upto what extend(LIMIT) do you want to Index\nSend 0 for all messages.", chat_id = message.from_user.id, filters=filters.text, timeout=30)
+            LIMIT = await bot.ask(text = "Send me from Upto what extend(LIMIT) do you want to Index\nSend 0 for all messages.", chat_id = message.from_user.id, filters=filters.text, timeout=30)
             print(LIMIT.text)
         except TimeoutError:
             await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
@@ -147,7 +148,7 @@ async def cb_handler(bot: Client, query: CallbackQuery):
     await query.message.delete()
     while True:
         try:
-            get_caption = await bot.reply(text = "Do you need a custom caption?\n\nIf yes , Send me caption \n\nif No send '0'", chat_id = query.from_user.id, filters=filters.text, timeout=30)
+            get_caption = await bot.ask(text = "Do you need a custom caption?\n\nIf yes , Send me caption \n\nif No send '0'", chat_id = query.from_user.id, filters=filters.text, timeout=30)
         except TimeoutError:
             await bot.send_message(query.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
             return

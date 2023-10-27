@@ -68,12 +68,10 @@ if channel.startswith("-100"):
 global channel_id_
 channel_id_ = int(channel)
 break
-else :
+else:
 await chat.reply_text("Wrong Channel ID")
 continue
-
-
-else :
+else:
 channel_type = "public"
 channel_id = re.search(r"t.me.(.*)", channel)
 #global channel_id_

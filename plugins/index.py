@@ -51,18 +51,6 @@ async def cb_handler(bot: Client, query: CallbackQuery):
         filter="video"
     caption=None
 
-
-    await query.message.delete()
-    while True:
-        try:
-            get_caption = await bot.send_message( chat_id = query.from_user.id, text=" Send me caption \n\nif No send '0'", filters=filters.text)
-            return
-        if input == "0":
-            caption=None
-        else:
-            caption=input
-        break
-
     m = await bot.send_message(
         text="Indexing Started",
         chat_id=query.from_user.id

@@ -34,8 +34,10 @@ async def run(bot, message):
         chat_id=message.from_user.id,
         text=f"Ok,\nNow choose what type of messages you want to forward.",
         reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton('all', callback_data='all')]]
+            [[InlineKeyboardButton('ALL FILE', callback_data='all')]]
         )
+)
+        
 
 @Client.on_callback_query()
 async def cb_handler(bot: Client, query: CallbackQuery):

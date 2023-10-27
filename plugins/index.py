@@ -30,8 +30,8 @@ async def run(bot, message):
     if message.from_user.id == OWNER:
         await msg.reply(f"Starting index...")
         user_id = msg.chat.id
-            LIMIT = await bot.ask(user_id, 'Send me from Upto do you want to Index Send 0 for all messages ‘LIMIT‘', filters=filters.text)
-            if await cancelled(LIMIT):
+        LIMIT = await bot.ask(user_id, 'Send me from Upto do you want to Index Send 0 for all messages ‘LIMIT‘', filters=filters.text)
+        if await cancelled(LIMIT):
             return
         try:
             limit_no=int(LIMIT.text)

@@ -13,7 +13,7 @@ class Config:
     SESSION = os.environ.get("SESSION", "Forward_Session")
     TO_CHANNEL = int(os.environ.get("TO_CHANNEL", ""))
     BOT_USERNAME= os.environ.get("BOT_USERNAME", None)
-    channel=int(os.environ.get("CHANNELINDEX", ""))
-    channel_id_=int(os.environ.get("INDEXCHANNEL_ID", ""))
+    CHANNELINDEX= os.environ.get("CHANNELINDEX", "")
+    channel_id_= os.environ.get("INDEXCHANNEL_ID", "")
 def LOGGER(name: str) -> logging.Logger:
     return logging.getLogger(name)

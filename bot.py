@@ -25,13 +25,9 @@ class Bot(Client):
 
     async def start(self):
         await super().start()
-        usr_bot_me = await self.get_me()
-        self.set_parse_mode("html")
-        self.LOGGER(__name__).info(
-            f"@{usr_bot_me.username}  started! "
-        )
-         self.USER_ID = await Bot().start()
+        me = await self.get_me()
+        await self.send_message(chat_id=TO_CHANNEL, text=STARTED)
 
     async def stop(self, *args):
         await super().stop()
-        self.LOGGER(__name__).info("Bot stopped. Bye.")
+        logging.info("Bot stopped. Bye.")

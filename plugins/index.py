@@ -134,12 +134,8 @@ if query.data == "docs":
 filter = "document"
 elif query.data == "all":
 filter = "empty"
-elif query.data == "photos":
-filter = "photo"
 elif query.data == "videos":
 filter = "video"
-elif query.data == "audio":
-filter = "audio"
 caption = None
 
 
@@ -194,11 +190,7 @@ file_type = file_type
 id = media.file_id
 break
 else :
-id = f" {
-    FROM
-}_ {
-    msg.message_id
-}"
+id = f" {FROM}_{msg.message_id}"
 file_type = "others"
 
 message_id = msg.message_id
@@ -206,47 +198,27 @@ try:
 await save_data(id, channel, message_id, methord, msg_caption, file_type)
 except Exception as e:
 print(e)
-await bot.send_message(OWNER, f"LOG-Error- {
-    e
-}")
+await bot.send_message(OWNER, f"LOG-Error-{e}")
 pass
 msg_count += 1
 mcount += 1
 new_skip_no = str(skip_no+msg_count)
-print(f"Total Indexed : {
-    msg_count
-} - Current SKIP_NO: {
-    new_skip_no
-}")
+print(f"Total Indexed : {msg_count}- Current SKIP_NO: {new_skip_no}")
 if mcount == 100:
 try:
 datetime_ist = datetime.now(IST)
 ISTIME = datetime_ist.strftime("%I:%M:%S %p - %d %B %Y")
-await m.edit(text = f"Total Indexed : <code> {
-    msg_count
-}</code>\nCurrent skip_no:<code> {
-    new_skip_no
-}</code>\nLast edited at {
-    ISTIME
-}")
+await m.edit(text = f"Total Indexed : <code> {msg_count}</code>\nCurrent skip_no:<code> {new_skip_no}</code>\nLast edited at {ISTIME}")
 mcount -= 100
 except FloodWait as e:
-print(f"Floodwait {
-    e.x
-}")
+print(f"Floodwait {e.x}")
 pass
 except Exception as e:
-await bot.send_message(chat_id = OWNER, text = f"LOG-Error: {
-    e
-}")
+await bot.send_message(chat_id = OWNER, text = f"LOG-Error: {e}")
 print(e)
 pass
-await m.edit(f"Succesfully Indexed <code> {
-    msg_count
-}</code> messages.")
+await m.edit(f"Succesfully Indexed <code> {msg_count}</code> messages.")
 except Exception as e:
 print(e)
-await m.edit(text = f"Error: {
-    e
-}")
+await m.edit(text = f"Error: {e}")
 pass

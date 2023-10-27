@@ -25,22 +25,22 @@ skip_no= "0"
 limit_no= "0"
 INDEXCHANNEL_ID = Config.INDEXCHANNEL_ID
 limit_no = "0"
+
     buttons=InlineKeyboardMarkup(
+      [
         [
-            [
                 InlineKeyboardButton("All Messages", callback_data="all")
-            ],
-            [
+         ],
+         [
                 InlineKeyboardButton("Document", callback_data="docs"),
                 InlineKeyboardButton("Photos", callback_data="photos")
-            ],
-            [
+         ],
+         [
                 InlineKeyboardButton("Videos", callback_data="videos"),
                 InlineKeyboardButton("Audios", callback_data="audio")
-            ]
-        ]
+         ]
+      ]
     )
-
 
 @Client.on_message(filters.private & filters.command(["index"]))
 async def run(bot, message):

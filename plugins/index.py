@@ -1,3 +1,6 @@
+import os
+import string
+import requests 
 class temp(object):
     BANNED_USERS = []
     BANNED_CHATS = []

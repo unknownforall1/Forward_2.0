@@ -24,21 +24,7 @@ CHANNELINDEX = Config.CHANNELINDEX
 skip_no= "0"
 limit_no= "0"
 INDEXCHANNEL_ID = Config.INDEXCHANNEL_ID
-
-@Client.on_message(filters.private & filters.command(["index"]))
-async def run(bot, message):
-    if message.from_user.id == OWNER:
-        await msg.reply(f"Starting index...")
-        user_id = msg.chat.id
-        LIMIT = await bot.ask(user_id, 'Send me from Upto do you want to Index Send 0 for all messages ‘LIMIT‘', filters=filters.text)
-        if await cancelled(LIMIT):
-            return
-        try:
-            limit_no=int(LIMIT.text)
-        except:
-            await LIMIT.reply_text("Thats an invalid ID, It should be an integer.")
-            continue
-
+limit_no = "0"
     buttons=InlineKeyboardMarkup(
         [
             [
@@ -53,7 +39,12 @@ async def run(bot, message):
                 InlineKeyboardButton("Audios", callback_data="audio")
             ]
         ]
-        )
+    )
+
+
+@Client.on_message(filters.private & filters.command(["index"]))
+async def run(bot, message):
+    if message.from_user.id == OWNER:
     await bot.send_message(
         chat_id=message.from_user.id,
         text=f"Ok,\nNow choose what type of messages you want to forward.",

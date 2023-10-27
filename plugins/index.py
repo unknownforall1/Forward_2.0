@@ -17,13 +17,13 @@ limit_no=""
 skip_no=""
 caption=""
 channel_type=""
-channel_id_=""
+channel_id_="-1001590117937"
 IST = pytz.timezone('Asia/Kolkata')
 OWNER=int(Config.OWNER_ID)
-channel=int(Config.CHANNELINDEX)
+CHANNELINDEX=int(Config.CHANNELINDEX)
 skip_no= "0"
 limit_no= "0"
-channel_id_=int(Config.INDEXCHANNEL_ID)
+INDEXCHANNEL_ID=int(Config.INDEXCHANNEL_ID)
 
 @Client.on_message(filters.private & filters.command(["index"]))
 async def run(bot, message):
@@ -107,11 +107,11 @@ async def cb_handler(bot: Client, query: CallbackQuery):
         async for MSG in bot.search_messages(chat_id=FROM,offset=skip_no,limit=limit_no,filter=filter):
             if channel_type == "public":
                 methord="bot"
-                channel=FROM
+                CHANNELINDEX=FROM
                 msg=await bot.get_messages(FROM, MSG.message_id)
             elif channel_type == "private":
                 methord="user"
-                channel=str(FROM)
+                CHANNELINDEX=str(FROM)
                 msg=await bot.USER.get_messages(FROM, MSG.message_id)
             msg_caption=""
             if caption is not None:
@@ -138,7 +138,7 @@ async def cb_handler(bot: Client, query: CallbackQuery):
             
             message_id=msg.message_id
             try:
-                await save_data(id, channel, message_id, methord, msg_caption, file_type)
+                await save_data(id, CHANNELINDEX, message_id, methord, msg_caption, file_type)
             except Exception as e:
                 print(e)
                 await bot.send_message(OWNER, f"LOG-Error-{e}")

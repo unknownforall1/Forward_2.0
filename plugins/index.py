@@ -1,234 +1,206 @@
 import logging
 import asyncio
-import pytz
-from datetime import datetime
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
-from pyrogram.errors import FloodWait
 from pyrogram import Client, filters, enums
+from pyrogram.errors import FloodWait
+from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid, ChatAdminRequired, UsernameInvalid, UsernameNotModified
+ADMINS=Config.OWNER_ID
+INDEX_REQ_CHANNEL=Config.TO_CHANNEL
+LOG_CHANNEL=Config.TO_CHANNEL
+from database import save_data
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+import re
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 lock = asyncio.Lock()
-from pyrogram.errors.exceptions.bad_request_400 import InviteHashExpired, UserAlreadyParticipant, ChannelInvalid, ChatAdminRequired, UsernameInvalid, UsernameNotModified
+
+
+ort pytz
+from datetime import datetime
+from pyrogram import Client, filters
+from pyrogram.errors import FloodWait
+from pyrogram.errors.exceptions.bad_request_400 import InviteHashExpired, UserAlreadyParticipant
 from config import Config
 import re
 from bot import Bot
-from asyncio.exceptions import TimeoutError
-from database import save_data
 import logging
 logging.basicConfig(format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s',
                     level=logging.ERROR)
 
-limit_no=""               
-skip_no=""
-caption=""
-channel_type=""
-channel_id_=""
-IST = pytz.timezone('Asia/Kolkata')
-OWNER=int(Config.OWNER_ID)
 
 
-@Client.on_message(filters.command & filters.incoming(["index"]))
-async def run(bot, message):
-    if message.from_user.id != OWNER:
-        await message.reply_text("Who the hell are you!!")
+@Client.on_callback_query(filters.regex(r'^index'))
+async def index_files(bot, query):
+    if query.data.startswith('index_cancel'):
+        temp.CANCEL = True
+        return await query.answer("Cancelling Indexing")
+    _, raju, chat, lst_msg_id, from_user = query.data.split("#")
+    if raju == 'reject':
+        await query.message.delete()
+        await bot.send_message(int(from_user),
+                               f'Your Submission for indexing {chat} has been decliened by our moderators.',
+                               reply_to_message_id=int(lst_msg_id))
         return
-    while True:
-        try:
-            chat = await bot.ask(text = "To Index a channel you may send me the channel invite link, so that I can join channel and index the files.\n\nIt should be something like <code>https://t.me/xxxxxx</code> or <code>https://t.me/joinchat/xxxxxx</code>", chat_id = message.from_user.id, filters=filters.text, timeout=30)
-            channel=chat.text
-        except TimeoutError:
-            await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
-            return
 
-        pattern=".*https://t.me/.*"
-        result = re.match(pattern, channel, flags=re.IGNORECASE)
-        if result:
-            print(channel)
-            break
-        else:
-            await chat.reply_text("Wrong URL")
-            continue
+    if lock.locked():
+        return await query.answer('Wait until previous process complete.', show_alert=True)
+    msg = query.message
 
-    if 'joinchat' in channel:
-        global channel_type
-        channel_type="private"
-        try:
-            await bot.join_chat(channel)
-        except UserAlreadyParticipant:
-            pass
-        except InviteHashExpired:
-            await chat.reply_text("Wrong URL or User Banned in channel.")
-            return
-        while True:
-            try:
-                id = await bot.ask(text = "Since this is a Private channel I need Channel id, Please send me channel ID\n\nIt should be something like <code>-100xxxxxxxxx</code>", chat_id = message.from_user.id, filters=filters.text, timeout=30)
-                channel=id.text
-            except TimeoutError:
-                await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
-                return
-            channel=id.text
-            if channel.startswith("-100"):
-                global channel_id_
-                channel_id_=int(channel)
-                break
-            else:
-                await chat.reply_text("Wrong Channel ID")
-                continue
+    await query.answer('Processing...⏳', show_alert=True)
+    if int(from_user) not in ADMINS:
+        await bot.send_message(int(from_user),
+                               f'Your Submission for indexing {chat} has been accepted by our moderators and will be added soon.',
+                               reply_to_message_id=int(lst_msg_id))
+    await msg.edit(
+        "Starting Indexing",
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton('Cancel', callback_data='index_cancel')]]
+        )
+    )
+    try:
+        chat = int(chat)
+    except:
+        chat = chat
+    await index_files_to_db(int(lst_msg_id), chat, msg, bot)
 
-            
+
+@Client.on_message((filters.forwarded | (filters.regex("(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")) & filters.text ) & filters.private & filters.incoming)
+async def send_for_index(bot, message):
+    if message.text:
+        regex = re.compile("(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")
+        match = regex.match(message.text)
+        if not match:
+            return await message.reply('Invalid link')
+        chat_id = match.group(4)
+        last_msg_id = int(match.group(5))
+        if chat_id.isnumeric():
+            chat_id  = int(("-100" + chat_id))
+    elif message.forward_from_chat.type == enums.ChatType.CHANNEL:
+        last_msg_id = message.forward_from_message_id
+        chat_id = message.forward_from_chat.username or message.forward_from_chat.id
     else:
-        #global channel_type
-        channel_type="public"
-        channel_id = re.search(r"t.me.(.*)", channel)
-        #global channel_id_
-        channel_id_=channel_id.group(1)
+        return
+    try:
+        await bot.get_chat(chat_id)
+    except ChannelInvalid:
+        return await message.reply('This may be a private channel / group. Make me an admin over there to index the files.')
+    except (UsernameInvalid, UsernameNotModified):
+        return await message.reply('Invalid Link specified.')
+    except Exception as e:
+        logger.exception(e)
+        return await message.reply(f'Errors - {e}')
+    try:
+        k = await bot.get_messages(chat_id, last_msg_id)
+    except:
+        return await message.reply('Make Sure That Iam An Admin In The Channel, if channel is private')
+    if k.empty:
+        return await message.reply('This may be group and iam not a admin of the group.')
 
-    while True:
-        try:
-            SKIP = await bot.ask(text = "Send me from where you want to start forwarding\nSend 0 for from beginning.", chat_id = message.from_user.id, filters=filters.text, timeout=30)
-            print(SKIP.text)
-        except TimeoutError:
-            await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
-            return
-        try:
-            global skip_no
-            skip_no=int(SKIP.text)
-            break
-        except:
-            await SKIP.reply_text("Thats an invalid ID, It should be an integer.")
-            continue
-    while True:
-        try:
-            LIMIT = await bot.ask(text = "Send me from Upto what extend(LIMIT) do you want to Index\nSend 0 for all messages.", chat_id = message.from_user.id, filters=filters.text, timeout=30)
-            print(LIMIT.text)
-        except TimeoutError:
-            await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
-            return
-        try:
-            global limit_no
-            limit_no=int(LIMIT.text)
-            break
-        except:
-            await LIMIT.reply_text("Thats an invalid ID, It should be an integer.")
-            continue
-
-    buttons=InlineKeyboardMarkup(
-        [
+    if message.from_user.id in ADMINS:
+        buttons = [
             [
-                InlineKeyboardButton("All Messages", callback_data="all")
+                InlineKeyboardButton('Yes',
+                                     callback_data=f'index#accept#{chat_id}#{last_msg_id}#{message.from_user.id}')
             ],
             [
-                InlineKeyboardButton("Document", callback_data="docs"),
-                InlineKeyboardButton("Photos", callback_data="photos")
-            ],
-            [
-                InlineKeyboardButton("Videos", callback_data="videos"),
-                InlineKeyboardButton("Audios", callback_data="audio")
+                InlineKeyboardButton('close', callback_data='close_data'),
             ]
         ]
-        )
-    await bot.send_message(
-        chat_id=message.from_user.id,
-        text=f"Ok,\nNow choose what type of messages you want to forward.",
-        reply_markup=buttons
-        )
+        reply_markup = InlineKeyboardMarkup(buttons)
+        return await message.reply(
+            f'Do you Want To Index This Channel/ Group ?\n\nChat ID/ Username: <code>{chat_id}</code>\nLast Message ID: <code>{last_msg_id}</code>',
+            reply_markup=reply_markup)
 
-@Client.on_callback_query()
-async def cb_handler(bot: Client, query: CallbackQuery):
-    filter=""
-    if query.data == "docs":
-        filter="document"
-    elif query.data == "all":
-        filter="empty"
-    elif query.data == "photos":
-        filter="photo"
-    elif query.data == "videos":
-        filter="video"
-    elif query.data == "audio":
-        filter="audio"
-    caption=None
-
-
-    await query.message.delete()
-    while True:
+    if type(chat_id) is int:
         try:
-            get_caption = await bot.ask(text = "Do you need a custom caption?\n\nIf yes , Send me caption \n\nif No send '0'", chat_id = query.from_user.id, filters=filters.text, timeout=30)
-        except TimeoutError:
-            await bot.send_message(query.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
-            return
-        input=get_caption.text
-        if input == "0":
-            caption=None
-        else:
-            caption=input
-        break
+            link = (await bot.create_chat_invite_link(chat_id)).invite_link
+        except ChatAdminRequired:
+            return await message.reply('Make sure I am an admin in the chat and have permission to invite users.')
+    else:
+        link = f"@{message.forward_from_chat.username}"
+    buttons = [
+        [
+            InlineKeyboardButton('Accept Index',
+                                 callback_data=f'index#accept#{chat_id}#{last_msg_id}#{message.from_user.id}')
+        ],
+        [
+            InlineKeyboardButton('Reject Index',
+                                 callback_data=f'index#reject#{chat_id}#{message.id}#{message.from_user.id}'),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(buttons)
+    await bot.send_message(LOG_CHANNEL,
+                           f'#IndexRequest\n\nBy : {message.from_user.mention} (<code>{message.from_user.id}</code>)\nChat ID/ Username - <code> {chat_id}</code>\nLast Message ID - <code>{last_msg_id}</code>\nInviteLink - {link}',
+                           reply_markup=reply_markup)
+    await message.reply('ThankYou For the Contribution, Wait For My Moderators to verify the files.')
 
-    m = await bot.send_message(
-        text="Indexing Started",
-        chat_id=query.from_user.id
-    )
-    msg_count = 0
-    mcount = 0
-    FROM=channel_id_
-    try:
-        async for MSG in bot.search_messages(chat_id=FROM,offset=skip_no,limit=limit_no,filter=filter):
-            if channel_type == "public":
-                methord="bot"
-                channel=FROM
-                msg=await bot.get_messages(FROM, MSG.message_id)
-            elif channel_type == "private":
-                methord="bot"
-                channel=str(FROM)
-                msg=await bot.get_messages(FROM, MSG.message_id)
-            msg_caption=""
-            if caption is not None:
-                msg_caption=caption
-            elif msg.caption:
-                msg_caption=msg.caption
-            if filter in ("document", "video"):
-                for file_type in ("document", "video"):
-                    media = getattr(msg, file_type, None)
-                    if media is not None:
-                        file_type = file_type
-                        id=media.file_id
-                        break
-            if filter == "empty":
-                for file_type in ("document", "video"):
-                    media = getattr(msg, file_type, None)
-                    if media is not None:
-                        file_type = file_type
-                        id=media.file_id
-                        break
-                else:
-                    id=f"{FROM}_{msg.message_id}"
-                    file_type="others"
-            
-            message_id=msg.message_id
-            try:
-                await save_data(id, channel, message_id, methord, msg_caption, file_type)
-            except Exception as e:
-                print(e)
-                await bot.send_message(OWNER, f"LOG-Error-{e}")
-                pass
-            msg_count += 1
-            mcount += 1
-            new_skip_no=str(skip_no+msg_count)
-            print(f"Total Indexed : {msg_count} - Current SKIP_NO: {new_skip_no}")
-            if mcount == 100:
-                try:
-                    datetime_ist = datetime.now(IST)
-                    ISTIME = datetime_ist.strftime("%I:%M:%S %p - %d %B %Y")
-                    await m.edit(text=f"Total Indexed : <code>{msg_count}</code>\nCurrent skip_no:<code>{new_skip_no}</code>\nLast edited at {ISTIME}")
-                    mcount -= 100
-                except FloodWait as e:
-                    print(f"Floodwait {e.x}")
-                    pass
-                except Exception as e:
-                    await bot.send_message(chat_id=OWNER, text=f"LOG-Error: {e}")
-                    print(e)
-                    pass
-        await m.edit(f"Succesfully Indexed <code>{msg_count}</code> messages.")
-    except Exception as e:
-        print(e)
-        await m.edit(text=f"Error: {e}")
-        pass
+
+@Client.on_message(filters.command('setskip') & filters.user(ADMINS))
+async def set_skip_number(bot, message):
+    if ' ' in message.text:
+        _, skip = message.text.split(" ")
+        try:
+            skip = int(skip)
+        except:
+            return await message.reply("Skip number should be an integer.")
+        await message.reply(f"Successfully set SKIP number as {skip}")
+        temp.CURRENT = int(skip)
+    else:
+        await message.reply("Give me a skip number")
+
+
+async def index_files_to_db(lst_msg_id, chat, msg, bot):
+    total_files = 0
+    duplicate = 0
+    errors = 0
+    deleted = 0
+    no_media = 0
+    unsupported = 0
+    async with lock:
+        try:
+            current = temp.CURRENT
+            temp.CANCEL = False
+            async for message in bot.iter_messages(chat, lst_msg_id, temp.CURRENT):
+                if temp.CANCEL:
+                    await msg.edit(f"Successfully Cancelled!!\n\nSaved <code>{total_files}</code> files to dataBase!\nDuplicate Files Skipped: <code>{duplicate}</code>\nDeleted Messages Skipped: <code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code>(Unsupported Media - `{unsupported}` )\nErrors Occurred: <code>{errors}</code>")
+                    break
+                current += 1
+                if current % 100 == 0:
+                    can = [[InlineKeyboardButton('Cancel', callback_data='index_cancel')]]
+                    reply = InlineKeyboardMarkup(can)
+                    try:
+                        await msg.edit_text(text=f"Total messages fetched: <code>{current}</code>\nTotal messages saved: <code>{total_files}</code>\nDuplicate Files Skipped: <code>{duplicate}</code>\nDeleted Messages Skipped: <code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code>(Unsupported Media - `{unsupported}` )\nErrors Occurred: <code>{errors}</code>", reply_markup=reply)       
+                    except FloodWait as t:
+                        await asyncio.sleep(t.value)
+                        await msg.edit_text(text=f"Total messages fetched: <code>{current}</code>\nTotal messages saved: <code>{total_files}</code>\nDuplicate Files Skipped: <code>{duplicate}</code>\nDeleted Messages Skipped: <code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code>(Unsupported Media - `{unsupported}` )\nErrors Occurred: <code>{errors}</code>", reply_markup=reply)                          
+                if message.empty:
+                    deleted += 1
+                    continue
+                elif not message.media:
+                    no_media += 1
+                    continue
+                elif message.media not in [enums.MessageMediaType.VIDEO, enums.MessageMediaType.AUDIO, enums.MessageMediaType.DOCUMENT]:
+                    unsupported += 1
+                    continue
+                media = getattr(message, message.media.value, None)
+                if not media:
+                    unsupported += 1
+                    continue
+                media.file_type = message.media.value
+                media.caption = message.caption
+                aynav, vnay = await save_file(media)
+                if aynav:
+                    total_files += 1
+                elif vnay == 0:
+                    duplicate += 1
+                elif vnay == 2:
+                    errors += 1       
+        except Exception as e:
+            logger.exception(e)
+            await msg.edit(f'Error: {e}')
+        else:
+            await msg.edit(f'Succesfully saved <code>{total_files}</code> to dataBase!\nDuplicate Files Skipped: <code>{duplicate}</code>\nDeleted Messages Skipped: <code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code>(Unsupported Media - `{unsupported}` )\nErrors Occurred: <code>{errors}</code>')
+
+
+
+
+

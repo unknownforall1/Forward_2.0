@@ -27,7 +27,7 @@ INDEXCHANNEL_ID = Config.INDEXCHANNEL_ID
 
 @Client.on_message(filters.private & filters.command(["index"]))
 async def run(bot, message):
-    if message.from_user.id = OWNER:
+    if message.from_user.id == OWNER:
         await msg.reply(f"Starting index...")
         user_id = msg.chat.id
             LIMIT = await bot.ask(text = "Send me from Upto what extend(LIMIT) do you want to Index\nSend 0 for all messages.", chat_id = message.from_user.id, filters=filters.text, timeout=30)

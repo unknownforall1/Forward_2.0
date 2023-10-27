@@ -1,224 +1,172 @@
-import pytz
-from datetime import datetime
+from telethon import TelegramClient
+from pyrogram.types import Message
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
-from pyrogram.errors import FloodWait
-from pyrogram.errors.exceptions.bad_request_400 import InviteHashExpired, UserAlreadyParticipant
-from config import Config
-import re
-from bot import Bot
 from asyncio.exceptions import TimeoutError
-from database import save_data
-import logging
-logging.basicConfig(format = '[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s',
-    level = logging.ERROR)
-INDEXMSG = "SEND LINK"
+from telethon.sessions import StringSession
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.errors import (
+    ApiIdInvalid,
+    PhoneNumberInvalid,
+    PhoneCodeInvalid,
+    PhoneCodeExpired,
+    SessionPasswordNeeded,
+    PasswordHashInvalid
+)
 
-limit_no = ""
-skip_no = ""
-caption = ""
-channel_type = ""
-channel_id_ = ""
-IST = pytz.timezone('Asia/Kolkata')
-OWNER = int(Config.OWNER_ID)
+from telethon.errors import (
+    ApiIdInvalidError,
+    PhoneNumberInvalidError,
+    PhoneCodeInvalidError,
+    PhoneCodeExpiredError,
+    SessionPasswordNeededError,
+    PasswordHashInvalidError
+)
+
+from data import Data
 
 
-@Client.on_message(filters.private & filters.command(["index"]))
-async def run(bot, message):
-if message.from_user.id != OWNER:
-await message.reply_text("Who the hell are you!!")
-return
-while True:
-try:
-chat = await bot.ask(OWNER_ID, 'Please send your ‘LINK‘', filters = filters.text, timeout = 30)
-return
-try:
-channel = int(chat.text)
-except TimeoutError:
-await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
-return
-pattern = ".*https://t.me/.*"
-result = re.match(pattern, channel, flags = re.IGNORECASE)
-if result:
-print(channel)
-break
-else :
-await chat.reply_text("Wrong URL")
-continue
-
-if 'joinchat' in channel:
-global channel_type
-channel_type = "private"
-try:
-await bot.join_chat(channel)
-except UserAlreadyParticipant:
-pass
-except InviteHashExpired:
-await chat.reply_text("Wrong URL or User Banned in channel.")
-return
-while True:
-try:
-id = await bot.ask(text = "Since this is a Private channel I need Channel id, Please send me channel ID\n\nIt should be something like <code>-100xxxxxxxxx</code>", chat_id = message.from_user.id, filters = filters.text, timeout = 30)
-channel = id.text
-except TimeoutError:
-await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
-return
-channel = id.text
-if channel.startswith("-100"):
-global channel_id_
-channel_id_ = int(channel)
-break
-else:
-await chat.reply_text("Wrong Channel ID")
-continue
-else:
-channel_type = "public"
-channel_id = re.search(r"t.me.(.*)", channel)
-#global channel_id_
-channel_id_ = channel_id.group(1)
-
-while True:
-try:
-SKIP = await bot.ask(text = "Send me from where you want to start forwarding\nSend 0 for from beginning.", chat_id = message.from_user.id, filters = filters.text, timeout = 30)
-print(SKIP.text)
-except TimeoutError:
-await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
-return
-try:
-global skip_no
-skip_no = int(SKIP.text)
-break
-except:
-await SKIP.reply_text("Thats an invalid ID, It should be an integer.")
-continue
-while True:
-try:
-LIMIT = await bot.ask(text = "Send me from Upto what extend(LIMIT) do you want to Index\nSend 0 for all messages.", chat_id = message.from_user.id, filters = filters.text, timeout = 30)
-print(LIMIT.text)
-except TimeoutError:
-await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
-return
-try:
-global limit_no
-limit_no = int(LIMIT.text)
-break
-except:
-await LIMIT.reply_text("Thats an invalid ID, It should be an integer.")
-continue
-
-buttons = InlineKeyboardMarkup(
+ask_ques = "Please choose the python library you want to generate string session for"
+buttons_ques = [
     [
-        [
-            InlineKeyboardButton("All Messages", callback_data = "all")
-        ],
-        [
-            InlineKeyboardButton("Document", callback_data = "docs"),
-            InlineKeyboardButton("Photos", callback_data = "photos")
-        ],
-        [
-            InlineKeyboardButton("Videos", callback_data = "videos"),
-            InlineKeyboardButton("Audios", callback_data = "audio")
-        ]
-    ]
-)
-await bot.send_message(
-    chat_id = message.from_user.id,
-    text = f"Ok,\nNow choose what type of messages you want to forward.",
-    reply_markup = buttons
-)
-
-@Client.on_callback_query()
-async def cb_handler(bot: Client, query: CallbackQuery):
-filter = ""
-if query.data == "docs":
-filter = "document"
-elif query.data == "all":
-filter = "empty"
-elif query.data == "videos":
-filter = "video"
-caption = None
+        InlineKeyboardButton("Pyrogram", callback_data="pyrogram"),
+        InlineKeyboardButton("Telethon", callback_data="telethon"),
+    ],
+    [
+        InlineKeyboardButton("Pyrogram Bot", callback_data="pyrogram_bot"),
+        InlineKeyboardButton("Telethon Bot", callback_data="telethon_bot"),
+    ],
+]
 
 
-await query.message.delete()
-while True:
-try:
-get_caption = await bot.ask(text = "Do you need a custom caption?\n\nIf yes , Send me caption \n\nif No send '0'", chat_id = query.from_user.id, filters = filters.text, timeout = 30)
-except TimeoutError:
-await bot.send_message(query.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
-return
-input = get_caption.text
-if input == "0":
-caption = None
-else :
-caption = input
-break
+@Client.on_message(filters.private & ~filters.forwarded & filters.command('generate'))
+async def main(_, msg):
+    await msg.reply(ask_ques, reply_markup=InlineKeyboardMarkup(buttons_ques))
 
-m = await bot.send_message(
-    text = "Indexing Started",
-    chat_id = query.from_user.id
-)
-msg_count = 0
-mcount = 0
-FROM = channel_id_
-try:
-async for MSG in bot.USER.search_messages(chat_id = FROM,offset = skip_no,limit = limit_no,filter = filter):
-if channel_type == "public":
-methord = "bot"
-channel = FROM
-msg = await bot.get_messages(FROM, MSG.message_id)
-elif channel_type == "private":
-methord = "user"
-channel = str(FROM)
-msg = await bot.USER.get_messages(FROM, MSG.message_id)
-msg_caption = ""
-if caption is not None:
-msg_caption = caption
-elif msg.caption:
-msg_caption = msg.caption
-if filter in ("document", "video", "audio", "photo"):
-for file_type in ("document", "video", "audio", "photo"):
-media = getattr(msg, file_type, None)
-if media is not None:
-file_type = file_type
-id = media.file_id
-break
-if filter == "empty":
-for file_type in ("document", "video", "audio", "photo"):
-media = getattr(msg, file_type, None)
-if media is not None:
-file_type = file_type
-id = media.file_id
-break
-else :
-id = f" {FROM}_{msg.message_id}"
-file_type = "others"
 
-message_id = msg.message_id
-try:
-await save_data(id, channel, message_id, methord, msg_caption, file_type)
-except Exception as e:
-print(e)
-await bot.send_message(OWNER, f"LOG-Error-{e}")
-pass
-msg_count += 1
-mcount += 1
-new_skip_no = str(skip_no+msg_count)
-print(f"Total Indexed : {msg_count}- Current SKIP_NO: {new_skip_no}")
-if mcount == 100:
-try:
-datetime_ist = datetime.now(IST)
-ISTIME = datetime_ist.strftime("%I:%M:%S %p - %d %B %Y")
-await m.edit(text = f"Total Indexed : <code> {msg_count}</code>\nCurrent skip_no:<code> {new_skip_no}</code>\nLast edited at {ISTIME}")
-mcount -= 100
-except FloodWait as e:
-print(f"Floodwait {e.x}")
-pass
-except Exception as e:
-await bot.send_message(chat_id = OWNER, text = f"LOG-Error: {e}")
-print(e)
-pass
-await m.edit(f"Succesfully Indexed <code> {msg_count}</code> messages.")
-except Exception as e:
-print(e)
-await m.edit(text = f"Error: {e}")
-pass
+async def generate_session(bot: Client, msg: Message, telethon=False, is_bot: bool = False):
+    if telethon:
+        ty = "Telethon"
+    else:
+        ty = "Pyrogram v2"
+    if is_bot:
+        ty += " Bot"
+    await msg.reply(f"Starting {ty} Session Generation...")
+    user_id = msg.chat.id
+    api_id_msg = await bot.ask(user_id, 'Please send your `API_ID`', filters=filters.text)
+    if await cancelled(api_id_msg):
+        return
+    try:
+        api_id = int(api_id_msg.text)
+    except ValueError:
+        await api_id_msg.reply('Not a valid API_ID (which must be an integer). Please start generating session again.', quote=True, reply_markup=InlineKeyboardMarkup(Data.generate_button))
+        return
+    api_hash_msg = await bot.ask(user_id, 'Please send your `API_HASH`', filters=filters.text)
+    if await cancelled(api_hash_msg):
+        return
+    api_hash = api_hash_msg.text
+    if not is_bot:
+        t = "Now please send your `PHONE_NUMBER` along with the country code. \nExample : `+19876543210`'"
+    else:
+        t = "Now please send your `BOT_TOKEN` \nExample : `12345:abcdefghijklmnopqrstuvwxyz`'"
+    phone_number_msg = await bot.ask(user_id, t, filters=filters.text)
+    if await cancelled(phone_number_msg):
+        return
+    phone_number = phone_number_msg.text
+    if not is_bot:
+        await msg.reply("Sending OTP...")
+    else:
+        await msg.reply("Logging as Bot User...")
+    if telethon and is_bot:
+        client = TelegramClient(StringSession(), api_id, api_hash)
+    elif telethon:
+        client = TelegramClient(StringSession(), api_id, api_hash)
+    elif is_bot:
+        client = Client(name=f"bot_{user_id}", api_id=api_id, api_hash=api_hash, bot_token=phone_number, in_memory=True)
+    else:
+        client = Client(name=f"user_{user_id}", api_id=api_id, api_hash=api_hash, in_memory=True)
+    await client.connect()
+    try:
+        code = None
+        if not is_bot:
+            if telethon:
+                code = await client.send_code_request(phone_number)
+            else:
+                code = await client.send_code(phone_number)
+    except (ApiIdInvalid, ApiIdInvalidError):
+        await msg.reply('`API_ID` and `API_HASH` combination is invalid. Please start generating session again.', reply_markup=InlineKeyboardMarkup(Data.generate_button))
+        return
+    except (PhoneNumberInvalid, PhoneNumberInvalidError):
+        await msg.reply('`PHONE_NUMBER` is invalid. Please start generating session again.', reply_markup=InlineKeyboardMarkup(Data.generate_button))
+        return
+    try:
+        phone_code_msg = None
+        if not is_bot:
+            phone_code_msg = await bot.ask(user_id, "Please check for an OTP in official telegram account. If you got it, send OTP here after reading the below format. \nIf OTP is `12345`, **please send it as** `1 2 3 4 5`.", filters=filters.text, timeout=600)
+            if await cancelled(phone_code_msg):
+                return
+    except TimeoutError:
+        await msg.reply('Time limit reached of 10 minutes. Please start generating session again.', reply_markup=InlineKeyboardMarkup(Data.generate_button))
+        return
+    if not is_bot:
+        phone_code = phone_code_msg.text.replace(" ", "")
+        try:
+            if telethon:
+                await client.sign_in(phone_number, phone_code, password=None)
+            else:
+                await client.sign_in(phone_number, code.phone_code_hash, phone_code)
+        except (PhoneCodeInvalid, PhoneCodeInvalidError):
+            await msg.reply('OTP is invalid. Please start generating session again.', reply_markup=InlineKeyboardMarkup(Data.generate_button))
+            return
+        except (PhoneCodeExpired, PhoneCodeExpiredError):
+            await msg.reply('OTP is expired. Please start generating session again.', reply_markup=InlineKeyboardMarkup(Data.generate_button))
+            return
+        except (SessionPasswordNeeded, SessionPasswordNeededError):
+            try:
+                two_step_msg = await bot.ask(user_id, 'Your account has enabled two-step verification. Please provide the password.', filters=filters.text, timeout=300)
+            except TimeoutError:
+                await msg.reply('Time limit reached of 5 minutes. Please start generating session again.', reply_markup=InlineKeyboardMarkup(Data.generate_button))
+                return
+            try:
+                password = two_step_msg.text
+                if telethon:
+                    await client.sign_in(password=password)
+                else:
+                    await client.check_password(password=password)
+                if await cancelled(api_id_msg):
+                    return
+            except (PasswordHashInvalid, PasswordHashInvalidError):
+                await two_step_msg.reply('Invalid Password Provided. Please start generating session again.', quote=True, reply_markup=InlineKeyboardMarkup(Data.generate_button))
+                return
+    else:
+        if telethon:
+            await client.start(bot_token=phone_number)
+        else:
+            await client.sign_in_bot(phone_number)
+    if telethon:
+        string_session = client.session.save()
+    else:
+        string_session = await client.export_session_string()
+    text = f"**{ty.upper()} STRING SESSION** \n\n`{string_session}` \n\nGenerated by @StarkStringGenBot"
+    try:
+        if not is_bot:
+            await client.send_message("me", text)
+        else:
+            await bot.send_message(msg.chat.id, text)
+    except KeyError:
+        pass
+    await client.disconnect()
+    await bot.send_message(msg.chat.id, "Successfully generated {} string session. \n\nPlease check your saved messages! \n\nBy @StarkBots".format("telethon" if telethon else "pyrogram"))
+
+
+async def cancelled(msg):
+    if "/cancel" in msg.text:
+        await msg.reply("Cancelled the Process!", quote=True, reply_markup=InlineKeyboardMarkup(Data.generate_button))
+        return True
+    elif "/restart" in msg.text:
+        await msg.reply("Restarted the Bot!", quote=True, reply_markup=InlineKeyboardMarkup(Data.generate_button))
+        return True
+    elif msg.text.startswith("/"):  # Bot Commands
+        await msg.reply("Cancelled the generation process!", quote=True)
+        return True
+    else:
+        return False

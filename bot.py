@@ -5,7 +5,7 @@ from config import LOGGER
 
 from user import Bot
 import pyromod.listen
-
+STARTED = "START HOGYA BHAI"
 
 class Bot(Client):
     USER_ID: int = None

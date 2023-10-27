@@ -30,4 +30,4 @@ class Bot(Client):
 
     async def stop(self, *args):
         await super().stop()
-        logging.info("Bot stopped. Bye.")
+        self.LOGGER(__name__).info("Bot stopped. Bye.")

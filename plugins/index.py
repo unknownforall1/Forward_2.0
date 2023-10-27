@@ -179,21 +179,20 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot):
                     except FloodWait as t:
                         await asyncio.sleep(t.value)
                         await msg.edit_text(text=f"Total messages fetched11")
-                media.file_type = message.media.value
-                media.caption = message.caption
-                aynav, vnay = await save_file(media)
-                if aynav:
-                    total_files += 1
-                elif vnay == 0:
-                    duplicate += 1
-                elif vnay == 2:
-                    errors += 1       
-        except Exception as e:
-            logger.exception(e)
-            await msg.edit(f'Error: {e}')
-        else:
-            await msg.edit(f'Succesfully saved <code>{total_files}</code> to dataBase!\nDuplicate Files Skipped: <code>{duplicate}</code>\nDeleted Messages Skipped: <code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code>(Unsupported Media - `{unsupported}` )\nErrors Occurred: <code>{errors}</code>')
-
+                        media.file_type = message.media.value
+                        media.caption = message.caption
+                        aynav, vnay = await save_file(media)
+                        if aynav:
+                            total_files += 1
+                        elif vnay == 0:
+                            duplicate += 1
+                        elif vnay == 2:
+                            errors += 1
+                    except Exception as e:
+                        logger.exception(e)
+                        await msg.edit(f'Error: {e}')
+                    else:
+                        await msg.edit(f'Succesfully saved <code>{total_files}</code> to dataBase!\nDuplicate Files Skipped: <code>{duplicate}</code>\nDeleted Messages Skipped: <code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code>(Unsupported Media - `{unsupported}` )\nErrors Occurred: <code>{errors}</code>')
 
 
 
